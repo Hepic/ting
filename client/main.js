@@ -1,1 +1,0 @@
-require('./ting.jsx');
