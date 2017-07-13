@@ -1,7 +1,0 @@
-Django==1.8.3
-MySQL-python==1.2.5
-argparse==1.2.1
-django-dynamic-fixture==1.8.5
-pytz==2015.4
-six==1.9.0
-wsgiref==0.1.2
