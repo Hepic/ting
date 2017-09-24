@@ -1,12 +1,12 @@
 import json
 
 from django.shortcuts import get_object_or_404
-from django.http import HttpResponse, HttpResponseBadRequest, QueryDict
+from django.http import HttpResponse, HttpResponseBadRequest, HttpResponseForbidden, HttpResponseNotFound, QueryDict
 from django.views.generic import View
 from .utils import datetime_to_timestamp
 
-from .models import Channel, Message
-from .forms import MessageCreationForm, MessagePatchForm
+from .models import Channel, Message, TingUser
+from .forms import MessageCreationForm, MessagePatchForm, SessionForm
 from django.conf import settings
 
 
@@ -96,3 +96,30 @@ class ChannelView(View):
             json.dumps(channel),
             content_type='application/json'
         )
+
+
+class SessionView(View):
+    def post(self, request, *args, **kwargs):
+        session_form = SessionForm(data=request.POST)
+
+        if not session_form.is_valid():
+            errors_dict = session_form.errors.as_data()
+
+            if '__all__' in errors_dict: # throw error only in specific occasions
+                error = errors_dict['__all__'][0]
+
+                if error.code in [
+                    'password_required', 'wrong_password', 'username_reserved'
+                ]:
+                    return HttpResponseForbidden(error.code)
+
+                if error.code == 'password_set':
+                    return HttpResponseNotFound(error.code)
+
+                if error.code == 'invalid_username':
+                    return HttpResponseBadRequest(error.code)
+
+        if session_form.getResponse() == 'Unreserved':
+            session_form.save()
+
+        return HttpResponse(status=204)
