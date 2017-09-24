@@ -37,6 +37,13 @@ DEBUG = config['django']['debug']
 ALLOWED_HOSTS = config['django']['allowed_hosts']
 
 
+# Authentication Backend
+
+AUTHENTICATION_BACKENDS = (
+     'django.contrib.auth.backends.ModelBackend',
+)
+
+
 # Application definition
 
 INSTALLED_APPS = (

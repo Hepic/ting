@@ -2,8 +2,11 @@ import time
 
 from django import forms
 from .models import Message
+from django.contrib.auth.models import User
 from .utils import timestamp_to_datetime, datetime_to_timestamp
-
+from django.contrib.auth.forms import AuthenticationForm
+from django.core.exceptions import ValidationError
+from django.contrib.auth import authenticate
 
 
 class MessageForm(forms.Form):
@@ -51,3 +54,82 @@ class MessagePatchForm(MessageForm):
         message.typing = self.cleaned_data.get('typing', False)
 
         message.save()
+
+
+class SessionForm(AuthenticationForm):
+    username = forms.CharField(max_length=20)
+    password = forms.CharField(max_length=32, widget=forms.PasswordInput, strip=False)
+    _response = None
+
+    def clean(self):
+        username = self.cleaned_data.get('username')
+        password = self.cleaned_data.get('password')
+
+        if username is None:
+            raise forms.ValidationError(
+                'invalid_username',
+                code='invalid_username'
+           )
+
+        try:
+            user = User.objects.get(username=username)
+
+            if user.has_usable_password():
+                if password is None:
+                    raise forms.ValidationError(
+                        'password_required',
+                        code='password_required'
+                    )
+
+                auth = authenticate(username=username, password=password)
+
+                if auth is None:
+                    raise forms.ValidationError(
+                        'wrong_password',
+                        code='wrong_password'
+                    )
+
+                if auth.is_active:
+                    self._response = 'Authenticate'
+                    return
+
+            now = int(round(time.time() * 1000))
+            seconds = (now - datetime_to_timestamp(user.tinguser.last_used)) / 1000
+
+            if seconds > 86400:
+                self._response = 'Unreserved'
+                return
+
+            raise forms.ValidationError(
+                'username_reserved',
+                code='username_reserved'
+            )
+
+        except User.DoesNotExist:
+            if password is not None:
+                raise forms.ValidationError(
+                    'password_set',
+                    code='password_set'
+                )
+
+            self._response = 'Unreserved'
+
+    def save(self):
+        username = self.cleaned_data.get('username')
+
+        try:
+            user = User.objects.get(username=username)
+
+        except User.DoesNotExist:
+            user = User.objects.create_user(
+                username = username
+            )
+
+        now = int(round(time.time() * 1000))
+        current_datetime = timestamp_to_datetime(now)
+
+        user.tinguser.last_used = current_datetime
+        user.save()
+
+    def getResponse(self):
+        return self._response
