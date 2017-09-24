@@ -33,7 +33,7 @@ class MessageCreationForm(MessageForm):
             message.datetime_sent = message.datetime_start
             message.save()
 
-        return message;
+        return message
 
 
 class MessagePatchForm(MessageForm):
