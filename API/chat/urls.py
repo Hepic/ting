@@ -19,4 +19,9 @@ urlpatterns = [
         views.ChannelView.as_view(),
         name='channel'
     ),
+    url(
+        r'^sessions/',
+        views.SessionView.as_view(),
+        name='session'
+    ),
 ]
