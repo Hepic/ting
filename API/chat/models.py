@@ -1,4 +1,7 @@
 from django.db import models
+from django.contrib.auth.models import User
+from django.db.models.signals import post_save
+from django.dispatch import receiver
 
 
 class Channel(models.Model):
@@ -33,3 +36,30 @@ class Message(models.Model):
     message_type = models.CharField(max_length=10,
                                     choices=MESSAGE_TYPE,
                                     default=TEXT)
+
+
+class TingUser(models.Model):
+    MALE = 'Male'
+    FEMALE = 'Female'
+    OTHER = 'Other'
+
+    GENDERS = (
+        (MALE, 'Male'),
+        (FEMALE, 'Female'),
+        (OTHER, 'Other')
+    )
+
+    user = models.OneToOneField(User, on_delete=models.CASCADE)
+    gender = models.CharField(max_length=10, choices=GENDERS, default=MALE)
+    birthday = models.DateTimeField(default=None, blank=True, null=True)
+    location = models.CharField(max_length=50, default=None, blank=True, null=True)
+    last_used = models.DateTimeField(default=None, blank=True, null=True)
+
+    @receiver(post_save, sender=User)
+    def create_profile(sender, **kwargs):
+        if kwargs['created']:
+            TingUser.objects.create(user=kwargs['instance'])
+
+    @receiver(post_save, sender=User)
+    def save_profile(sender, **kwargs):
+        kwargs['instance'].tinguser.save()
