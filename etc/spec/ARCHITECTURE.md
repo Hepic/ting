@@ -242,7 +242,8 @@ The server checks if the username is reserved.
      
  * If the username is not reserved:
 
-     - If the password is set in the request, the server returns a 404 status code.
+     - If the password is set in the request, the server returns a 404 status code
+       with the error `password_set`.
 
      - If the password is not set in the request, the server returns a 200 status code. 
 
